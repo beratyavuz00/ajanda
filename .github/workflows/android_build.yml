@@ -36,7 +36,10 @@ jobs:
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew assembleDebug
+          # Gradle önbelleğini temizle ve yeniden oluştur
+          ./gradlew clean
+          ./gradlew assembleDebug --no-daemon --stacktrace
+        working-directory: . # Dosyaların ana dizinde olduğunu varsayıyoruz
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
