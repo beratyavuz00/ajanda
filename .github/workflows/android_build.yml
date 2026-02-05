@@ -29,22 +29,24 @@ jobs:
 
       - name: Capacitor Setup
         run: |
-          # Çakışmaları önlemek için eski android klasörünü siliyoruz
           rm -rf android
           npx cap init Ajanda com.beratyavuz.ajanda --web-dir dist
           npx cap add android
           npx cap sync android
 
-      - name: Build APK with Gradle
+      - name: Fix Gradle Concurrency & Build
         run: |
           cd android
           chmod +x gradlew
-          # Hata aldığın dosya izleme ve önbellek sorununu çözen ayar:
-          mkdir -p ~/.gradle
-          echo "org.gradle.vfs.watch=false" >> ~/.gradle/gradle.properties
-          # Temiz bir build başlatıyoruz
+          
+          # Dosya kilitlenme hatasını önlemek için paralel çalışmayı tamamen kapatıyoruz
+          echo "org.gradle.parallel=false" >> gradle.properties
+          echo "org.gradle.workers.max=1" >> gradle.properties
+          echo "org.gradle.vfs.watch=false" >> gradle.properties
+          
+          # Önce her şeyi temizle, sonra tek işlemciyle (single worker) oluştur
           ./gradlew clean
-          ./gradlew assembleDebug --no-daemon --stacktrace
+          ./gradlew assembleDebug --no-daemon --max-workers=1
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
