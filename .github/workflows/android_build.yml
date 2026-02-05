@@ -27,6 +27,10 @@ jobs:
           distribution: 'zulu'
           java-version: '17'
 
+      # Gradle'ın kendi resmi aracını kullanarak ortamı hazırlıyoruz
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
       - name: Capacitor Setup
         run: |
           rm -rf android
@@ -34,20 +38,19 @@ jobs:
           npx cap add android
           npx cap sync android
 
-      - name: Fix Gradle Concurrency & Build
+      - name: Build APK with Safe Settings
         run: |
           cd android
           chmod +x gradlew
           
-          # Dosya kilitlenme hatasını önlemek için paralel çalışmayı tamamen kapatıyoruz
-          echo "org.gradle.parallel=false" >> gradle.properties
-          echo "org.gradle.workers.max=1" >> gradle.properties
-          echo "org.gradle.vfs.watch=false" >> gradle.properties
-          
-          # Önce her şeyi temizle, sonra tek işlemciyle (single worker) oluştur
-          ./gradlew clean
-          ./gradlew assembleDebug --no-daemon --max-workers=1
-
+          # Tüm çakışma ihtimallerini kapatan kritik ayarlar:
+          ./gradlew assembleDebug \
+            --no-daemon \
+            --max-workers=1 \
+            -Dorg.gradle.vfs.watch=false \
+            -Dorg.gradle.parallel=false \
+            -Dorg.gradle.caching=false
+            
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
