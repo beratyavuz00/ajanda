@@ -14,7 +14,9 @@ jobs:
           node-version: 18
 
       - name: Install Dependencies
-        run: npm install
+        run: |
+          npm install
+          npm install @capacitor/core @capacitor/cli @capacitor/android
 
       - name: Build Web Project
         run: npm run build
@@ -25,9 +27,10 @@ jobs:
           distribution: 'zulu'
           java-version: '17'
 
-      - name: Install Capacitor & Android Platform
+      - name: Capacitor Setup
         run: |
-          npm install @capacitor/core @capacitor/cli @capacitor/android
+          # Çakışmaları önlemek için eski android klasörünü siliyoruz
+          rm -rf android
           npx cap init Ajanda com.beratyavuz.ajanda --web-dir dist
           npx cap add android
           npx cap sync android
@@ -36,6 +39,10 @@ jobs:
         run: |
           cd android
           chmod +x gradlew
+          # Hata aldığın dosya izleme ve önbellek sorununu çözen ayar:
+          mkdir -p ~/.gradle
+          echo "org.gradle.vfs.watch=false" >> ~/.gradle/gradle.properties
+          # Temiz bir build başlatıyoruz
           ./gradlew clean
           ./gradlew assembleDebug --no-daemon --stacktrace
 
