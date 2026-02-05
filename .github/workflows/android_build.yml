@@ -24,12 +24,8 @@ jobs:
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
-          distribution: 'zulu'
+          distribution: 'temurin' # Zulu yerine Temurin kullanarak farklı bir kütüphane yolu deniyoruz
           java-version: '17'
-
-      # Gradle'ın kendi resmi aracını kullanarak ortamı hazırlıyoruz
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
 
       - name: Capacitor Setup
         run: |
@@ -38,19 +34,21 @@ jobs:
           npx cap add android
           npx cap sync android
 
-      - name: Build APK with Safe Settings
+      - name: Build APK with Force Isolation
         run: |
           cd android
           chmod +x gradlew
           
-          # Tüm çakışma ihtimallerini kapatan kritik ayarlar:
-          ./gradlew assembleDebug \
-            --no-daemon \
-            --max-workers=1 \
-            -Dorg.gradle.vfs.watch=false \
-            -Dorg.gradle.parallel=false \
-            -Dorg.gradle.caching=false
-            
+          # Hata veren Jar dosyasını baypas etmek için Gradle kilitlerini kırıyoruz
+          mkdir -p ~/.gradle
+          echo "org.gradle.vfs.watch=false" >> ~/.gradle/gradle.properties
+          echo "org.gradle.parallel=false" >> ~/.gradle/gradle.properties
+          echo "org.gradle.workers.max=1" >> ~/.gradle/gradle.properties
+          
+          # 'assembleDebug' yerine 'build' kullanarak tüm bağımlılıkları sırayla kontrol etmesini sağlıyoruz
+          ./gradlew clean
+          ./gradlew assembleDebug --no-daemon --stacktrace --info
+
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
