@@ -1,0 +1,28 @@
+workflows:
+  android-workflow:
+    name: Ajanda Android Build
+    instance_type: linux
+    max_build_duration: 60
+    environment:
+      node: 18
+      java: 17
+    scripts:
+      - name: Bağımlılıkları Yükle
+        script: | 
+          npm install
+          npm install @capacitor/cli @capacitor/core @capacitor/android
+      - name: Web Build (Vite)
+        script: | 
+          npm run build
+      - name: Capacitor Hazırlık
+        script: | 
+          npx cap init Ajanda com.beratyavuz.ajanda --web-dir dist
+          npx cap add android || true
+          npx cap sync android
+      - name: APK Derleme (Gradle)
+        script: | 
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug
+    artifacts:
+      - android/app/build/outputs/apk/debug/*.apk
