@@ -27,7 +27,8 @@ jobs:
 
       - name: Install Capacitor & Android Platform
         run: |
-          npx cap init Ajandam com.ajandam.app --web-dir dist
+          npm install @capacitor/core @capacitor/cli @capacitor/android
+          npx cap init Ajanda com.beratyavuz.ajanda --web-dir dist
           npx cap add android
           npx cap sync android
 
